@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şikayetler</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <button id="deleteAll" style="margin-bottom: 20px;">Tüm Şikayetleri Sil</button>
+    <table id="complaintTable">
+        <thead>
+            <tr>
+                <th>Ad</th>
+                <th>E-posta</th>
+                <th>Şikayet</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td data-label="Ad">Ali Yılmaz</td>
+                <td data-label="E-posta">ali@gmail.com</td>
+                <td data-label="Şikayet">Sipariş teslim edilmedi.</td>
+                <td data-label="İşlemler"><button class="delete-btn">Sil</button></td>
+            </tr>
+            
+        </tbody>
+    </table>
+    
+    <script>
+        const API_URL = "https://6708d2de8e86a8d9e4302ef8.mockapi.io/pubgs/sss";
+
+        // Şikayetleri Listele
+        async function fetchComplaints() {
+            try {
+                const response = await fetch(API_URL);
+                const complaints = await response.json();
+
+                const tbody = document.querySelector("#complaintTable tbody");
+                tbody.innerHTML = ""; // Önce tabloyu temizle
+
+                complaints.forEach((complaint) => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                        <td>${complaint.name || "Ad Bilinmiyor"}</td>
+                        <td>${complaint.email || "E-posta Bilinmiyor"}</td>
+                        <td>${complaint.message || "Mesaj Yok"}</td>
+                        <td>
+                            <button class="delete-btn" data-id="${complaint.id}">Sil</button>
+                        </td>
+                    `;
+
+                    tbody.appendChild(row);
+                });
+
+                // Her silme butonuna olay ekle
+                document.querySelectorAll(".delete-btn").forEach((button) => {
+                    button.addEventListener("click", deleteComplaint);
+                });
+            } catch (error) {
+                console.error("Şikayetler yüklenirken hata:", error);
+            }
+        }
+
+        // Tek Şikayet Sil
+        async function deleteComplaint(event) {
+            const id = event.target.getAttribute("data-id");
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: "DELETE",
+                });
+
+                if (response.ok) {
+                    alert("Şikayet silindi.");
+                    fetchComplaints(); // Listeyi güncelle
+                } else {
+                    alert("Şikayet silinirken bir hata oluştu.");
+                }
+            } catch (error) {
+                console.error("Silme işlemi sırasında hata:", error);
+            }
+        }
+
+        // Tüm Şikayetleri Sil
+        async function deleteAllComplaints() {
+            try {
+                const response = await fetch(API_URL);
+                const complaints = await response.json();
+
+                const deletePromises = complaints.map((complaint) =>
+                    fetch(`${API_URL}/${complaint.id}`, { method: "DELETE" })
+                );
+
+                await Promise.all(deletePromises);
+
+                alert("Tüm şikayetler silindi.");
+                fetchComplaints(); // Listeyi güncelle
+            } catch (error) {
+                console.error("Tüm şikayetler silinirken hata:", error);
+            }
+        }
+
+        // Tüm silme butonuna olay ekle
+        document.getElementById("deleteAll").addEventListener("click", deleteAllComplaints);
+
+        // Sayfa yüklendiğinde şikayetleri listele
+        document.addEventListener("DOMContentLoaded", fetchComplaints);
+    </script>
+    <style>
+        /* Genel Sayfa Stili */
+        body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+/* Tüm Sil Butonu */
+#deleteAll {
+    display: block;
+    margin: 20px auto;
+    padding: 12px 20px;
+    background-color: #e63946;
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#deleteAll:hover {
+    background-color: #d62839;
+}
+
+/* Tablo Stili */
+#complaintTable {
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+#complaintTable thead {
+    background-color: #2a9d8f;
+    color: white;
+}
+
+#complaintTable th,
+#complaintTable td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+#complaintTable th {
+    font-size: 18px;
+}
+
+#complaintTable td {
+    vertical-align: top;
+    max-width: 300px;
+    word-break: break-word;
+    white-space: normal;
+    overflow: visible;
+}
+
+#complaintTable tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#complaintTable tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Sil Butonları */
+.delete-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #fff;
+    background-color: #e63946;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #d62839;
+}
+
+/* Responsiv Tasarım */
+@media (max-width: 768px) {
+    #complaintTable {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    #complaintTable thead {
+        display: none;
+    }
+
+    #complaintTable tbody tr {
+        display: block;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #complaintTable td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        padding: 8px 10px;
+        border: none;
+    }
+
+    #complaintTable td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #555;
+        flex-shrink: 0;
+    }
+
+    #deleteAll {
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+}
+    </style>
+</body>
+</html>
